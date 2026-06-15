@@ -509,11 +509,11 @@ class WorkOrderAddUpdateSerializer(serializers.Serializer):
             is_internal=validated_data.get("is_internal", False),
         )
 
-        if not update.is_internal:
-            notify_public_work_order_update_added(
-                work_order,
-                actor=request.user,
-            )
+        notify_public_work_order_update_added(
+            work_order,
+            actor=request.user,
+            is_internal=update.is_internal,
+        )
 
         return update
 

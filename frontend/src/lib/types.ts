@@ -49,6 +49,9 @@ export type Me = {
   full_name: string;
   phone: string;
   avatar: string | null;
+  date_joined: string;
+  created_at: string;
+  updated_at: string;
   is_platform_admin: boolean;
   organization_memberships: Membership[];
   client_contact_profile: ClientContactProfile | null;

@@ -79,6 +79,8 @@ class AuthAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], user.email)
         self.assertIn("avatar", response.data)
+        self.assertIn("date_joined", response.data)
+        self.assertIn("updated_at", response.data)
         self.assertEqual(len(response.data["organization_memberships"]), 1)
 
     def test_profile_update_changes_current_user_name(self):

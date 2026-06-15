@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import type { Me } from "@/lib/types";
-import { mediaUrl } from "@/lib/utils";
+import { formatDate, mediaUrl } from "@/lib/utils";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "Enter your name before saving."),
@@ -80,6 +80,8 @@ export function ProfilePage() {
               label="Organization"
               value={auth.selectedMembership?.organization.name ?? auth.user?.client_contact_profile?.client_name ?? "Not assigned"}
             />
+            <Info label="Date joined" value={formatDate(auth.user?.date_joined)} />
+            <Info label="Last updated" value={formatDate(auth.user?.updated_at)} />
           </div>
 
           <div className="flex flex-col gap-3 rounded-lg border border-border bg-[#fbfcfd] p-4 sm:flex-row sm:items-center sm:justify-between">

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCheck } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import type { NotificationItem } from "@/lib/types";
@@ -62,8 +63,8 @@ export function NotificationsPage({ portal = "company" }: { portal?: Notificatio
                 portal={portal}
                 onRead={() => markRead.mutate(notification.id)}
                 onUnread={() => markUnread.mutate(notification.id)}
-                onOpen={() => {
-                  if (!notification.is_read) markRead.mutate(notification.id);
+                onOpen={async () => {
+                  if (!notification.is_read) await markRead.mutateAsync(notification.id);
                 }}
               />
             ))
@@ -85,8 +86,9 @@ function NotificationRow({
   portal: NotificationPortal;
   onRead: () => void;
   onUnread: () => void;
-  onOpen: () => void;
+  onOpen: () => Promise<void>;
 }) {
+  const router = useRouter();
   const href = notification.work_order
     ? portal === "client"
       ? `/client/requests/${notification.work_order.id}`
@@ -100,7 +102,15 @@ function NotificationRow({
       <div>
         <div className="flex flex-wrap items-center gap-2">
           {href ? (
-            <Link className="font-semibold text-primary hover:underline" href={href} onClick={onOpen}>
+            <Link
+              className="font-semibold text-primary hover:underline"
+              href={href}
+              onClick={async (event) => {
+                event.preventDefault();
+                await onOpen();
+                router.push(href);
+              }}
+            >
               {notification.title}
             </Link>
           ) : (

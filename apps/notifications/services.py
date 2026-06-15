@@ -73,20 +73,29 @@ def _bulk_notify(recipients, title, message, organization=None, work_order=None)
 
 
 def notify_work_order_assigned(work_order, actor=None):
-    """Notify the newly assigned technician."""
-    recipients_by_id = {}
-    _add_assigned_technician(recipients_by_id, work_order, actor=actor)
+    """Notify the assigned technician and requesting client contact."""
+    technician_recipients_by_id = {}
+    client_recipients_by_id = {}
+    _add_assigned_technician(technician_recipients_by_id, work_order, actor=actor)
+    _add_requesting_client_contact(client_recipients_by_id, work_order, actor=actor)
 
-    title = "New work order assigned"
-    message = f'Work order "{work_order.title}" has been assigned to you.'
-
-    return _bulk_notify(
-        recipients_by_id.values(),
-        title,
-        message,
+    created_count = _bulk_notify(
+        technician_recipients_by_id.values(),
+        "New work order assigned",
+        f'Work order "{work_order.title}" has been assigned to you.',
         organization=work_order.organization,
         work_order=work_order,
     )
+
+    created_count += _bulk_notify(
+        client_recipients_by_id.values(),
+        "New technician assigned",
+        f'A technician has been assigned to your service request "{work_order.title}".',
+        organization=work_order.organization,
+        work_order=work_order,
+    )
+
+    return created_count
 
 
 def notify_work_order_status_changed(
@@ -157,10 +166,14 @@ def notify_client_comment_added(work_order, actor=None):
     )
 
 
-def notify_public_work_order_update_added(work_order, actor=None):
-    """Notify the requesting client contact about a public work order update."""
+def notify_public_work_order_update_added(work_order, actor=None, is_internal=False):
+    """Notify stakeholders about a company-side work order update."""
     recipients_by_id = {}
-    _add_requesting_client_contact(recipients_by_id, work_order, actor=actor)
+    _add_organization_leaders(recipients_by_id, work_order.organization, actor=actor)
+    _add_assigned_technician(recipients_by_id, work_order, actor=actor)
+
+    if not is_internal:
+        _add_requesting_client_contact(recipients_by_id, work_order, actor=actor)
 
     title = "New work order update"
     message = f'New update added to work order "{work_order.title}".'
