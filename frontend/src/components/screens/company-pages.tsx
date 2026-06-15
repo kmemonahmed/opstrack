@@ -8,6 +8,7 @@ import type { Asset, Client, ClientContact, TeamMember, WorkOrderListItem, WorkO
 import { useAuth } from "@/components/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { ResourceList, dateColumn, type FieldConfig } from "@/components/screens/resource-list";
 import { formatDate, titleCase } from "@/lib/utils";
@@ -36,6 +37,16 @@ export function DashboardPage() {
   const workOrderSummary = useQuery({ queryKey: ["work-order-summary"], queryFn: () => api.workOrderSummary({}) });
 
   if (summary.isLoading) return <LoadingBlock label="Loading dashboard" />;
+  if (summary.isError) {
+    return (
+      <ErrorState
+        title="Could not load dashboard"
+        message="The dashboard summary could not be loaded. Please refresh and try again."
+        onAction={() => void summary.refetch()}
+        homeHref="/app/dashboard"
+      />
+    );
+  }
 
   const roleView =
     auth.role === "OWNER"
@@ -460,6 +471,16 @@ export function WorkOrdersPage({ portal = "company" }: { portal?: "company" | "t
 export function ReportsPage() {
   const summary = useQuery({ queryKey: ["work-order-summary"], queryFn: () => api.workOrderSummary({}) });
   if (summary.isLoading) return <LoadingBlock label="Loading reports" />;
+  if (summary.isError) {
+    return (
+      <ErrorState
+        title="Could not load reports"
+        message="Report data could not be loaded right now. Please try again."
+        onAction={() => void summary.refetch()}
+        homeHref="/app/dashboard"
+      />
+    );
+  }
 
   return <DashboardReports summary={summary.data} isLoading={summary.isLoading} standalone />;
 }
