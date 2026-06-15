@@ -213,6 +213,14 @@ class WorkOrderWorkflowTests(APITestCase):
         )
 
     def test_manager_can_assign_technician(self):
+        contact = create_client_contact(
+            self.client_a,
+            email="assignment-contact@example.com",
+            full_name="Assignment Contact",
+            can_login=True,
+        )
+        self.work_order_a.requested_by_contact = contact
+        self.work_order_a.save(update_fields=["requested_by_contact", "updated_at"])
         self.client.force_authenticate(user=self.manager)
 
         response = self.client.post(
@@ -225,6 +233,20 @@ class WorkOrderWorkflowTests(APITestCase):
         self.work_order_a.refresh_from_db()
         self.assertEqual(self.work_order_a.assigned_to_id, self.tech_membership.id)
         self.assertEqual(self.work_order_a.status, WorkOrder.Status.ASSIGNED)
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.tech,
+                work_order=self.work_order_a,
+                title="New work order assigned",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=contact.user,
+                work_order=self.work_order_a,
+                title="New technician assigned",
+            ).exists()
+        )
 
     def test_cannot_mark_open_work_order_assigned_without_technician(self):
         self.client.force_authenticate(user=self.manager)
@@ -327,6 +349,21 @@ class WorkOrderWorkflowTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_add_update_creates_work_order_update(self):
+        owner, _ = create_member_user(
+            "wo-owner@example.com",
+            self.org_a,
+            OrganizationMembership.Role.OWNER,
+            "WO Owner",
+        )
+        contact = create_client_contact(
+            self.client_a,
+            email="wo-contact@example.com",
+            full_name="WO Contact",
+            can_login=True,
+        )
+        self.work_order_a.assigned_to = self.tech_membership
+        self.work_order_a.requested_by_contact = contact
+        self.work_order_a.save(update_fields=["assigned_to", "requested_by_contact", "updated_at"])
         self.client.force_authenticate(user=self.manager)
 
         response = self.client.post(
@@ -340,6 +377,73 @@ class WorkOrderWorkflowTests(APITestCase):
             WorkOrderUpdate.objects.filter(
                 work_order=self.work_order_a,
                 message="Parts ordered.",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=owner,
+                work_order=self.work_order_a,
+                title="New work order update",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.tech,
+                work_order=self.work_order_a,
+                title="New work order update",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=contact.user,
+                work_order=self.work_order_a,
+                title="New work order update",
+            ).exists()
+        )
+        self.assertFalse(
+            Notification.objects.filter(
+                user=owner,
+                work_order=self.work_order_a,
+                title="New client comment",
+            ).exists()
+        )
+
+    def test_internal_update_does_not_notify_client_contact(self):
+        owner, _ = create_member_user(
+            "wo-internal-owner@example.com",
+            self.org_a,
+            OrganizationMembership.Role.OWNER,
+            "Internal Owner",
+        )
+        contact = create_client_contact(
+            self.client_a,
+            email="wo-internal-contact@example.com",
+            full_name="Internal Contact",
+            can_login=True,
+        )
+        self.work_order_a.requested_by_contact = contact
+        self.work_order_a.save(update_fields=["requested_by_contact", "updated_at"])
+        self.client.force_authenticate(user=self.manager)
+
+        response = self.client.post(
+            f"/api/work-orders/{self.work_order_a.id}/add-update/",
+            {"message": "Private dispatch note.", "is_internal": True},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            Notification.objects.filter(
+                user=owner,
+                work_order=self.work_order_a,
+                title="New work order update",
+            ).exists()
+        )
+        self.assertFalse(
+            Notification.objects.filter(
+                user=contact.user,
+                work_order=self.work_order_a,
+                title="New work order update",
             ).exists()
         )
 

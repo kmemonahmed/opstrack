@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import {
@@ -61,29 +61,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [selectedOrganizationId, setSelectedOrgState] = useState<string | null>(() => getSelectedOrganizationId());
-  const hasTokens = typeof window !== "undefined" ? Boolean(getTokens()) : false;
+  const [hasSession, setHasSession] = useState(() => Boolean(getTokens()));
+  const [sessionRevision, setSessionRevision] = useState(0);
+
+  const resetLocalSession = useCallback(() => {
+    clearTokens();
+    setSelectedOrganizationId(null);
+    setSelectedOrgState(null);
+    setHasSession(false);
+    setSessionRevision((value) => value + 1);
+    queryClient.clear();
+  }, [queryClient]);
 
   const meQuery = useQuery({
-    queryKey: ["me"],
+    queryKey: ["me", sessionRevision],
     queryFn: api.me,
-    enabled: hasTokens,
+    enabled: hasSession,
   });
 
   useEffect(() => {
     if (meQuery.error instanceof ApiError && meQuery.error.status === 401) {
-      clearTokens();
-      router.replace("/login");
+      window.setTimeout(() => {
+        resetLocalSession();
+        router.replace("/login");
+      }, 0);
     }
-  }, [meQuery.error, router]);
+  }, [meQuery.error, resetLocalSession, router]);
 
   useEffect(() => {
     if (!meQuery.data?.is_platform_admin) return;
 
-    clearTokens();
-    queryClient.clear();
-    toast.error("You are not authorized to access this portal.");
-    router.replace("/login");
-  }, [meQuery.data?.is_platform_admin, queryClient, router]);
+    window.setTimeout(() => {
+      resetLocalSession();
+      toast.error("You are not authorized to access this portal.");
+      router.replace("/login");
+    }, 0);
+  }, [meQuery.data?.is_platform_admin, resetLocalSession, router]);
 
   const selectedMembership = useMemo(
     () => resolveMembership(meQuery.data ?? null, selectedOrganizationId),
@@ -100,8 +113,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: api.login,
     onSuccess: async (tokens) => {
+      queryClient.clear();
+      setSelectedOrganizationId(null);
+      setSelectedOrgState(null);
       setTokens(tokens);
-      const user = await queryClient.fetchQuery({ queryKey: ["me"], queryFn: api.me });
+      setHasSession(true);
+      const nextRevision = sessionRevision + 1;
+      setSessionRevision(nextRevision);
+      const user = await queryClient.fetchQuery({ queryKey: ["me", nextRevision], queryFn: api.me });
       const membership = resolveMembership(user, getSelectedOrganizationId());
       if (membership) {
         setSelectedOrganizationId(membership.organization.id);
@@ -115,8 +134,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: api.register,
     onSuccess: async (tokens) => {
+      queryClient.clear();
+      setSelectedOrganizationId(null);
+      setSelectedOrgState(null);
       setTokens(tokens);
-      const user = await queryClient.fetchQuery({ queryKey: ["me"], queryFn: api.me });
+      setHasSession(true);
+      const nextRevision = sessionRevision + 1;
+      setSessionRevision(nextRevision);
+      const user = await queryClient.fetchQuery({ queryKey: ["me", nextRevision], queryFn: api.me });
       const membership = resolveMembership(user, null);
       if (membership) {
         setSelectedOrganizationId(membership.organization.id);
@@ -129,16 +154,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     const tokens = getTokens();
+    setHasSession(false);
+    setSelectedOrganizationId(null);
+    setSelectedOrgState(null);
+    setSessionRevision((value) => value + 1);
+    queryClient.clear();
+    router.replace("/login");
+
     try {
       if (tokens?.refresh) await api.logout(tokens.refresh);
     } catch {
       // Local token cleanup is enough if the refresh token is already invalid.
     }
     clearTokens();
-    setSelectedOrganizationId(null);
-    setSelectedOrgState(null);
-    queryClient.clear();
-    router.replace("/login");
   }
 
   function setOrganization(id: string) {
@@ -149,12 +177,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const isPublic = pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/register");
-    if (!hasTokens && !isPublic) router.replace("/login");
-  }, [hasTokens, pathname, router]);
+    if (!hasSession && !isPublic) router.replace("/login");
+  }, [hasSession, pathname, router]);
 
   const value: AuthContextValue = {
-    user: meQuery.data ?? null,
-    isLoading: meQuery.isLoading,
+    user: hasSession ? meQuery.data ?? null : null,
+    isLoading: hasSession ? meQuery.isLoading : false,
     selectedMembership,
     selectedOrganizationId,
     role,

@@ -344,6 +344,7 @@ export function TeamPage() {
           type: "select",
           required: true,
           options: ["ADMIN", "MANAGER", "TECHNICIAN"].map((value) => ({ value, label: titleCase(value) })),
+          editOptions: ["OWNER", "ADMIN", "MANAGER", "TECHNICIAN"].map((value) => ({ value, label: titleCase(value) })),
         },
         { name: "password", label: "Password", type: "password", createOnly: true },
         { name: "is_active", label: "Active", type: "checkbox" },

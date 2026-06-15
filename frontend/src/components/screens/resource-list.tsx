@@ -20,6 +20,7 @@ export type FieldConfig = {
   type?: "text" | "email" | "password" | "textarea" | "select" | "checkbox" | "date" | "datetime-local";
   required?: boolean;
   options?: Array<{ value: string; label: string }>;
+  editOptions?: Array<{ value: string; label: string }>;
   createOnly?: boolean;
 };
 
@@ -308,6 +309,7 @@ function DetailsDialog<T>({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Record profile</p>
               <Dialog.Title className="mt-1 text-lg font-semibold tracking-tight">{title}</Dialog.Title>
+              <Dialog.Description className="sr-only">View the complete record details.</Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <Button type="button" variant="ghost" size="icon" aria-label="Close details">
@@ -390,19 +392,31 @@ function FormDialog({
           className="flex min-h-0 flex-1 flex-col"
           onSubmit={(event) => {
             event.preventDefault();
-            onSubmit(buildFormPayload(fields, values, mode));
+            onSubmit(buildFormPayload(fields, values, initialValues, mode));
           }}
         >
           <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-5 md:grid-cols-2">
-            {fields.map((field) => (
-              <div key={field.name} className={field.type === "textarea" ? "space-y-1.5 md:col-span-2" : "space-y-1.5"}>
-                {field.type !== "checkbox" ? <Label>{field.label}</Label> : null}
+            {fields.map((field) => {
+              const options = mode === "edit" && field.editOptions ? field.editOptions : field.options;
+
+              const checkboxGroupLabel = field.type === "checkbox" ? getCheckboxGroupLabel(field) : null;
+
+              return (
+              <div
+                key={field.name}
+                className={
+                  field.type === "textarea"
+                    ? "space-y-1.5 md:col-span-2"
+                    : "space-y-1.5"
+                }
+              >
+                {field.type !== "checkbox" ? <Label>{field.label}</Label> : checkboxGroupLabel ? <Label>{checkboxGroupLabel}</Label> : <div className="hidden h-5 md:block" />}
                 {field.type === "textarea" ? (
                   <Textarea value={String(values[field.name] ?? "")} required={field.required} onChange={(event) => setValue(field.name, event.target.value)} />
                 ) : field.type === "select" ? (
                   <Select value={String(values[field.name] ?? "")} required={field.required} onChange={(event) => setValue(field.name, event.target.value)}>
                     <option value="">Choose {field.label.toLowerCase()}</option>
-                    {field.options?.map((option) => (
+                    {options?.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -426,7 +440,8 @@ function FormDialog({
                   />
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
           <div className="flex justify-end gap-2 border-t border-border bg-[#fbfcfd] px-5 py-4">
             <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
@@ -441,7 +456,12 @@ function FormDialog({
   );
 }
 
-function buildFormPayload(fields: FieldConfig[], values: Record<string, unknown>, mode: "create" | "edit") {
+function buildFormPayload(
+  fields: FieldConfig[],
+  values: Record<string, unknown>,
+  initialValues: Record<string, unknown>,
+  mode: "create" | "edit",
+) {
   const payload = Object.fromEntries(
     fields.map((field) => {
       const value = values[field.name];
@@ -458,7 +478,21 @@ function buildFormPayload(fields: FieldConfig[], values: Record<string, unknown>
     }),
   );
 
-  return mode === "create" ? compactObject(payload) : payload;
+  if (mode === "create") return compactObject(payload);
+
+  return Object.fromEntries(
+    Object.entries(payload).filter(([key, value]) => formValueChanged(value, initialValues[key])),
+  );
+}
+
+function formValueChanged(value: unknown, initialValue: unknown) {
+  const normalize = (item: unknown) => {
+    if (item === undefined || item === null) return "";
+    if (typeof item === "boolean") return item;
+    return String(item);
+  };
+
+  return normalize(value) !== normalize(initialValue);
 }
 
 function getEntityLabel(title: string, actionLabel?: string) {
@@ -469,6 +503,13 @@ function getEntityLabel(title: string, actionLabel?: string) {
 
   if (title === "Client Contacts") return "contact";
   return title.replace(/s$/, "").toLowerCase();
+}
+
+function getCheckboxGroupLabel(field: FieldConfig) {
+  if (field.name === "is_active") return "Status";
+  if (field.name === "is_primary") return "Primary contact";
+  if (field.name === "can_login") return "Portal access";
+  return null;
 }
 
 export function dateColumn(value?: string | null) {

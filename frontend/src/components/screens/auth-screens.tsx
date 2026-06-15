@@ -180,7 +180,7 @@ function AuthLoading() {
 function AuthFrame({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <main className="grid min-h-screen bg-[#f2f6f7] lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="relative hidden overflow-hidden bg-[#102027] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden overflow-hidden bg-[#102027] px-10 py-8 text-white lg:flex lg:flex-col lg:gap-6 xl:py-12 xl:gap-12 2xl:gap-16">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(72,190,205,0.28),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(247,181,87,0.18),transparent_24%)]" />
         <div className="relative flex">
           <div className="flex h-28 w-[34rem] max-w-full items-center overflow-hidden rounded-xl bg-white shadow-xl shadow-cyan-950/20 ring-1 ring-white/10">
@@ -188,28 +188,28 @@ function AuthFrame({ title, subtitle, children }: { title: string; subtitle: str
             <img src="/maintolio-logo.svg" alt="Maintolio" className="h-full w-full scale-[1.28] object-contain object-center" />
           </div>
         </div>
-        <div className="relative">
+        <div className="relative flex-1">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#9bcbd4]">Built for field service teams</p>
-          <h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.05]">
+          <h1 className="mt-4 max-w-xl text-4xl font-semibold leading-[1.05] xl:mt-6 xl:text-5xl">
             A calmer way to run client service operations.
           </h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-[#d7eef2]">
+          <p className="mt-4 max-w-lg text-sm leading-6 text-[#d7eef2] xl:mt-6 xl:text-base xl:leading-7">
             Coordinate requests, assign technicians, track assets, and keep client teams informed from one secure workspace.
           </p>
-          <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
+          <div className="mt-5 grid max-w-xl grid-cols-3 gap-3 xl:mt-10">
             {[
               ["24/7", "request visibility"],
               ["Role-based", "team access"],
               ["Live", "workflow alerts"],
             ].map(([value, label]) => (
-              <div key={value} className="rounded-lg border border-white/12 bg-white/8 p-4 backdrop-blur">
-                <p className="text-2xl font-semibold">{value}</p>
+              <div key={value} className="rounded-lg border border-white/12 bg-white/8 p-3 backdrop-blur xl:p-4">
+                <p className="text-xl font-semibold xl:text-2xl">{value}</p>
                 <p className="mt-1 text-xs text-[#b8dce3]">{label}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="relative grid grid-cols-3 gap-3 text-sm text-[#d7eef2]">
+        <div className="relative grid grid-cols-3 gap-3 text-xs text-[#d7eef2] xl:text-sm">
           {["Tenant isolation", "Audit-ready updates", "Client portal"].map((item) => (
             <span key={item} className="inline-flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-[#61d4c0]" />

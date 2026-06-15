@@ -299,14 +299,17 @@ export function WorkOrderDetailScreen({ id, portal = "company" }: { id: string; 
                     <Badge value={workOrder.status} />
                   </div>
                 </div>
-                <Select value={selectedStatus} disabled={!availableStatuses.length} onChange={(event) => setStatus(event.target.value)}>
-                  <option value="">{availableStatuses.length ? "Choose next status" : "No status changes available"}</option>
-                  {availableStatuses.map((value) => (
-                    <option key={value} value={value}>
-                      {titleCase(value)}
-                    </option>
-                  ))}
-                </Select>
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select value={selectedStatus} disabled={!availableStatuses.length} onChange={(event) => setStatus(event.target.value)}>
+                    <option value="">{availableStatuses.length ? "Choose next status" : "No status changes available"}</option>
+                    {availableStatuses.map((value) => (
+                      <option key={value} value={value}>
+                        {titleCase(value)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
                 <Button className="w-full" onClick={() => changeStatus.mutate(selectedStatus)} disabled={!selectedStatus || changeStatus.isPending}>
                   Update status
                 </Button>
