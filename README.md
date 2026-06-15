@@ -17,8 +17,11 @@ The backend is built with Django REST Framework and is designed around organizat
 - Celery background tasks
 - Dockerized local setup
 - Swagger/OpenAPI API docs
+- Role-aware Next.js frontend demo app
 
 ## Tech Stack
+
+Backend:
 
 - Python
 - Django
@@ -31,6 +34,17 @@ The backend is built with Django REST Framework and is designed around organizat
 - SimpleJWT
 - drf-spectacular
 - Docker
+
+Frontend:
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- TanStack Query
+- React Hook Form
+- Zod
+- Recharts
 
 ## Architecture Overview
 
@@ -176,15 +190,20 @@ The raw OpenAPI schema is available at:
 http://127.0.0.1:8000/api/schema/
 ```
 
+## User Manual
+
+The public v1 user manual is available at:
+
+```text
+docs/USER_MANUAL.md
+```
+
 ## Project Status
 
-Backend v1 is complete. Frontend applications are planned.
+Backend v1 is complete and a role-aware frontend demo app is available in `frontend/`.
 
 ## Roadmap
 
-- Frontend company portal
-- Technician mobile-friendly portal
-- Client portal UI
 - Email notifications
 - S3 file storage
 - Production deployment on AWS
@@ -192,7 +211,7 @@ Backend v1 is complete. Frontend applications are planned.
 
 ## Frontend
 
-A Next.js frontend lives in `frontend/`.
+A Next.js frontend lives in `frontend/`. It includes company, technician, and client portal routes in one role-aware app.
 
 ```bash
 cd frontend
@@ -202,3 +221,21 @@ npm run dev
 ```
 
 Open `http://127.0.0.1:3000` while the Django API is running on `http://127.0.0.1:8000`. The frontend proxies `/api/*` and `/media/*` to the backend during local development.
+
+Useful frontend commands:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+npm run test
+npm run e2e
+```
+
+Before sharing a demo link, test the main flows at desktop and mobile widths:
+
+- Owner/admin/manager login and dashboard
+- Technician assigned work order view
+- Client contact request flow
+- Work order assignment, status changes, updates, and attachments
+- Notifications list, unread count, and mark-read navigation

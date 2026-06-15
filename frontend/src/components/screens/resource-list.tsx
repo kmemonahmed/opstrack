@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { LoadingBlock } from "@/components/ui/loading";
 import type { PaginatedResponse } from "@/lib/types";
@@ -115,8 +116,7 @@ export function ResourceList<T extends { id: string }>({
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Workspace</p>
-          <h2 className="mt-1 text-3xl font-semibold tracking-tight">{title}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight">{title}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
         {create ? (
@@ -169,6 +169,15 @@ export function ResourceList<T extends { id: string }>({
         <CardContent className="p-0">
           {query.isLoading ? (
             <LoadingBlock />
+          ) : query.isError ? (
+            <div className="p-5">
+              <ErrorState
+                title={`Could not load ${title.toLowerCase()}`}
+                message="The latest workspace data could not be loaded. Please try again."
+                onAction={() => void query.refetch()}
+                compact
+              />
+            </div>
           ) : !query.data?.results.length ? (
             <div className="p-5">
               <EmptyState title="No matching records" message="Adjust your search or filters to widen the view." />

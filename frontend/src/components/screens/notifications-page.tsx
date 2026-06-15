@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { formatDate } from "@/lib/utils";
 
@@ -35,6 +36,15 @@ export function NotificationsPage({ portal = "company" }: { portal?: Notificatio
   });
 
   if (notifications.isLoading) return <LoadingBlock label="Loading notifications" />;
+  if (notifications.isError) {
+    return (
+      <ErrorState
+        title="Could not load notifications"
+        message="Your workflow alerts could not be loaded. Please try again."
+        onAction={() => void notifications.refetch()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">

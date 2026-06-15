@@ -41,8 +41,7 @@ export function ProfilePage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Account profile</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Profile</h2>
+        <h2 className="text-3xl font-semibold tracking-tight">Profile</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Manage your workspace identity and account access.</p>
       </div>
 
@@ -152,7 +151,7 @@ function EditProfileDialog({ open, onOpenChange, user }: { open: boolean; onOpen
       return api.updateProfile(body);
     },
     onSuccess: (updatedUser) => {
-      queryClient.setQueryData(["me"], updatedUser);
+      queryClient.setQueriesData({ queryKey: ["me"] }, updatedUser);
       resetAvatarDraft();
       toast.success("Profile updated");
       onOpenChange(false);

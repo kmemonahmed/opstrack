@@ -176,8 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    const isPublic = pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/register");
-    if (!hasSession && !isPublic) router.replace("/login");
+    const isProtected = pathname.startsWith("/app") || pathname.startsWith("/tech") || pathname.startsWith("/client");
+    if (!hasSession && isProtected) router.replace("/login");
   }, [hasSession, pathname, router]);
 
   const value: AuthContextValue = {

@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { LoadingBlock } from "@/components/ui/loading";
 import { formatDate, titleCase } from "@/lib/utils";
@@ -135,6 +136,16 @@ export function WorkOrderDetailScreen({ id, portal = "company" }: { id: string; 
   });
 
   if (detailQuery.isLoading) return <LoadingBlock label="Loading work order" />;
+  if (detailQuery.isError) {
+    return (
+      <ErrorState
+        title="Could not load work order"
+        message="This work order could not be loaded. It may have moved, or your access may have changed."
+        onAction={() => void detailQuery.refetch()}
+        homeHref={baseBack}
+      />
+    );
+  }
   const workOrder = detailQuery.data;
   if (!workOrder) return null;
   const currentAssigneeId = workOrder.assigned_to?.id ?? "";
